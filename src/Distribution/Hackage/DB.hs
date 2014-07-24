@@ -14,7 +14,7 @@
  -}
 
 module Distribution.Hackage.DB
-  ( Hackage, readHackage, readHackage', parseHackage
+  ( Hackage, readHackage, readHackage', parseHackage, getHackagePath
   , module Data.Map
   , module Data.Version
   , module Distribution.Package
@@ -50,14 +50,8 @@ type Hackage = Map String (Map Version GenericPackageDescription)
 
 readHackage :: IO Hackage
 readHackage = do
-  homedir <- getHomeDirectory
-  readHackage' (joinPath [ homedir,
-#ifdef IS_DARWIN
-    "Library", "Haskell", "repo-cache"
-#else
-    ".cabal", "packages"
-#endif
-    , "hackage.haskell.org", "00-index.tar" ])
+  hp <- getHackagePath
+  readHackage' hp
 
 -- | Read the Hackage database from the given 'FilePath' and return a
 -- 'Hackage' map that provides fast access to its contents.
@@ -91,3 +85,8 @@ parseHackage = Tar.foldEntries addEntry empty (error . show) . Tar.read
 
     pVersion :: String -> Version
     pVersion str = fromMaybe (error $ "Hackage.DB.parseHackage: cannot parse version " ++ show str) (simpleParse str)
+
+getHackagePath :: IO FilePath
+getHackagePath = do
+ homedir <- getHomeDirectory
+ return (joinPath [homedir, ".cabal", "packages", "hackage.haskell.org"])
