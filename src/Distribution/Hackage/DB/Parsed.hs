@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 {- |
@@ -21,7 +22,12 @@ import Data.Map as Map
 import Data.Time.Clock
 import Distribution.Package
 import Distribution.PackageDescription
+#if MIN_VERSION_Cabal(2,2,0)
+import Distribution.PackageDescription.Parsec
+import Distribution.Parsec.ParseResult
+#else
 import Distribution.PackageDescription.Parse
+#endif
 import Distribution.Text
 import Distribution.Version
 
@@ -57,9 +63,16 @@ parseVersionData pn v (U.VersionData cf m) =
    mapException (\e -> HackageDBPackageVersion v (e :: SomeException)) $
      VersionData gpd (parseMetaData pn v m)
   where
-    gpd = case parsePackageDescription (toString cf) of
+    gpd =
+#if MIN_VERSION_Cabal(2,2,0)
+          case snd $ runParseResult $ parseGenericPackageDescription $ toStrict cf of
+            Right a  -> a
+            Left msg -> throw (InvalidCabalFile (show msg))
+#else
+          case parsePackageDescription (toString cf) of
             ParseOk _ a     -> a
             ParseFailed msg -> throw (InvalidCabalFile (show msg))
+#endif
 
 parseMetaData :: PackageName -> Version -> ByteString -> Map String String
 parseMetaData pn v buf | BS.null buf = Map.empty
