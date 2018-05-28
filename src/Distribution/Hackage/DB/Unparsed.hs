@@ -33,8 +33,8 @@ data PackageData = PackageData { preferredVersions :: ByteString
                                }
   deriving (Show, Eq, Generic)
 
-data VersionData = VersionData { cabalFile :: ByteString
-                               , metaFile  :: ByteString
+data VersionData = VersionData { cabalFileRevisions :: [ByteString]
+                               , metaFile           :: ByteString
                                }
   deriving (Show, Eq, Generic)
 
@@ -62,8 +62,8 @@ handleEntry db e =
     (["preferred-versions"], NormalFile buf _) -> insertWith setConstraint pn (PackageData buf Map.empty) db
 
     ([v',file], NormalFile buf _) -> let v = parseText "Version" v' in
-          if file == pn' <.> "cabal" then insertVersionData setCabalFile pn v (VersionData buf BS.empty) db else
-          if file == "package.json" then insertVersionData setMetaFile pn v (VersionData BS.empty buf) db else
+          if file == pn' <.> "cabal" then insertVersionData setCabalFile pn v (VersionData [buf] BS.empty) db else
+          if file == "package.json" then insertVersionData setMetaFile pn v (VersionData [] buf) db else
           throw (UnsupportedTarEntry e)
 
     (_, Directory) -> db                -- some tarballs have these superfluous entries
@@ -84,7 +84,7 @@ insertVersionData setFile pn v vd = insertWith mergeVersionData pn pd
     mergeVersionData _ old = old { versions = insertWith setFile v vd (versions old) }
 
 setCabalFile :: VersionData -> VersionData -> VersionData
-setCabalFile new old = old { cabalFile = cabalFile new }
+setCabalFile new old = old { cabalFileRevisions = cabalFileRevisions old ++ cabalFileRevisions new }
 
 setMetaFile :: VersionData -> VersionData -> VersionData
 setMetaFile new old = old { metaFile = metaFile new }
