@@ -61,7 +61,7 @@ parsePackageData pn (U.PackageData pv vs') =
                       -- The first word should match pn and should be removed to
                       -- allow parseText to parse the VersionRange; this is
                       -- simply done by dropping the first word (non-space chars)
-                      BSS.dropWhile (/= toEnum 32) $  -- 32 = ASCII space
+                      BSS.dropWhile (/= toEnum 32)   -- 32 = ASCII space
                       pv)
 
 parseVersionData :: PackageName -> Version -> U.VersionData -> VersionData
