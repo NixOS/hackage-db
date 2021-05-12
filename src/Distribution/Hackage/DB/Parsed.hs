@@ -55,7 +55,14 @@ parsePackageData pn (U.PackageData pv vs') =
       Map.filterWithKey (\v _ -> v `withinRange` vr) vs'
   where
     vr | BSS.null pv = anyVersion
-       | otherwise = parseText "preferred version range" (toString pv)
+       | otherwise = parseText "preferred version range"
+                     (toString $
+                      -- pv is something like: "containers <0.5.8.1 || >0.5.8.1".
+                      -- The first word should match pn and should be removed to
+                      -- allow parseText to parse the VersionRange; this is
+                      -- simply done by dropping the first word (non-space chars)
+                      BSS.dropWhile (/= toEnum 32) $  -- 32 = ASCII space
+                      pv)
 
 parseVersionData :: PackageName -> Version -> U.VersionData -> VersionData
 parseVersionData pn v (U.VersionData cf m) =
