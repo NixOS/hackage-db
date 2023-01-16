@@ -20,7 +20,7 @@ extra-source-files: README.md
 
 source-repository head
   type:     git
-  location: git://github.com/NixOS/hackage-db.git
+  location: https://github.com/NixOS/hackage-db.git
 
 flag install-examples
   default:     False
